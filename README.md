@@ -1,4 +1,4 @@
-# Úkol z předmětu Webové technologie
+# Úkol z předmětu [Webové technologie](https://4iz268.github.io/)
 
 Za úkol bylo zprovoznit kalkulačku, aby dokázala vypočítat zadávané příklady.
 
