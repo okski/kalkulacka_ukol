@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Úkol k procvičení javascriptu - kalkulačka</title>
+        <style type="text/css">
+            *{
+                box-sizing: border-box;
+            }
+            div#buttons{
+                overflow: auto;
+                width: 330px;
+            }
+            div#buttons button{
+                padding: 10px;
+                font-size: 18px;
+                text-align: center;
+                width: 80px;
+                float: left;
+                margin: 0;
+                border: 1px solid white;
+                background: #f8f8f8;
+                cursor: pointer;
+            }
+            div#buttons button:hover{
+                background: maroon;
+                color: white;
+            }
+            div#buttons button#button0{
+                width: 160px;
+            }
+            div#buttons button#buttonRovnase{
+                width: 240px;
+            }
+            input#cislo{
+                padding: 20px;
+                width: 320px;
+                border: 1px solid #f8f8f8;
+                font-size: 18px;
+                text-align: right;
+            }
+        </style>
+        <script type="text/javascript" src="../09-dom-jquery/external/jquery-2.1.4.js"></script>
+        <script type="text/javascript">
+            var probihajiciVypocet=false;//proměnná pro uložení info, jestli bylo aktuálně stisknuto nějaké tlačítko s operací...
+            function faktorial() {
+                let numberInput = $('#cislo');
+                let numberInputVal = numberInput.val();
+                let number = 1;
+                let result = 1;
+                let i = numberInputVal.length;
+
+                if (numberInputVal.charAt(numberInputVal.length-1) === "+" ||
+                    numberInputVal.charAt(numberInputVal.length-1) === "-" ||
+                    numberInputVal.charAt(numberInputVal.length-1) === "/" ||
+                    numberInputVal.charAt(numberInputVal.length-1) === "*") {
+                    return;
+                }
+
+                for (i ; i > 0 ; i--) {
+                    if (numberInputVal.charAt(i) === "+" ||
+                        numberInputVal.charAt(i) === "-" ||
+                        numberInputVal.charAt(i) === "/" ||
+                        numberInputVal.charAt(i) === "*") {
+                        number = parseFloat(numberInputVal.substr(i+1, numberInputVal.length));
+                        numberInputVal = numberInputVal.substr(0, i+1);
+                        break;
+                    }
+                }
+
+                if (i === 0) {
+                    number = numberInputVal.substr(0, numberInputVal.length);
+                    numberInputVal = "";
+                }
+
+                for (number; number > 0 ; number--) {
+                    result *= number;
+                    if (result >= Math.exp(750)) {
+                        result = "Infinity";
+                        numberInput.val(result);
+                        probihajiciVypocet = true;
+                        return;
+                    }
+                }
+
+                numberInput.val(numberInputVal+result);
+            }
+
+            function spocitat(){
+                let numberInput = $('#cislo');
+                let numberInputVal = numberInput.val();
+                let resultOfProblem = 0;
+                let offset = 0;
+                let splitInputSubtraction = ["-"];
+                let splitInputAddition = ["+"];
+                let splitInputMultiplication = ["*"];
+                let splitInputDivision = ["/"];
+
+                splitInputAddition[1] = numberInputVal.split(/\+/);
+                splitInputSubtraction[1] = splitInputAddition.slice().toString().split(/[-,]/);
+                splitInputMultiplication[1] = splitInputSubtraction.slice().toString().split(/[*,]/);
+                splitInputDivision[1] = splitInputMultiplication.slice().toString().split(/[\/,]/);
+
+                /*Děleno výpočet*/
+                for (let i = 0; i < splitInputMultiplication[1].length; i++) {
+                    if (splitInputMultiplication[1][i].indexOf("/") !== -1) {
+                        let delenec = splitInputDivision[1][i+offset+1];
+                        let delitel = splitInputDivision[1][i+offset+2];
+
+                        if (parseFloat(delitel) === 0) {
+                            probihajiciVypocet = true;
+                            numberInput.val("nelze dělit nulou");
+                            return;
+                        }
+
+                        let result = parseFloat(delenec) / parseFloat(delitel);
+
+                        offset++;
+                        splitInputMultiplication[1][i] = result;
+                    } else if (splitInputMultiplication[1][i] !== "-" && splitInputMultiplication[1][i] !== "+"){
+                        splitInputMultiplication[1][i] = splitInputDivision[1][i + offset + 1];
+                    }
+                }
+
+                offset = 0;
+                /*Krát výpočet*/
+                for (let i = 0; i < splitInputSubtraction[1].length; i++) {
+                    if (splitInputSubtraction[1][i].indexOf("*") !== -1) {
+                        let cinitel1 = splitInputMultiplication[1][i + offset + 1];
+                        let cinitel2 = splitInputMultiplication[1][i + offset + 2];
+
+                        let result = parseFloat(cinitel1) * parseFloat(cinitel2);
+
+                        offset++;
+                        splitInputSubtraction[1][i] = result;
+                    } else if (splitInputSubtraction[1][i] !== "+"){
+                        splitInputSubtraction[1][i] = splitInputMultiplication[1][i + offset + 1];
+                    }
+                }
+
+                offset = 0;
+                /*Mínus výpočet*/
+                for (let i = 0; i < splitInputAddition[1].length; i++) {
+                    if (splitInputAddition[1][i].indexOf("-") !== -1) {
+                        let mensenec = splitInputSubtraction[1][i + offset + 1];
+                        let mensitel = splitInputSubtraction[1][i + offset + 2];
+
+                        let result = parseFloat(mensenec) - parseFloat(mensitel);
+
+                        offset++;
+                        splitInputAddition[1][i] = result;
+                    } else {
+                        splitInputAddition[1][i] = splitInputSubtraction[1][i + offset + 1];
+                    }
+                }
+
+                /*Plus výpočet*/
+                for (let i = 0; i < splitInputAddition[1].length; i++) {
+                    let scitanec = splitInputAddition[1][i];
+
+                    resultOfProblem += parseFloat(scitanec);
+                }
+
+                probihajiciVypocet = true;
+                numberInput.val(resultOfProblem);
+                //TODO výpočet zadaného příkladu
+                // alert('tahle kalkulačka zatím umí jen zapisovat čísla...');
+            }
+
+            $(document).ready(function(){
+                let numberInput=$('#cislo');
+                //reakce na stisknutí tlačítka s číslem...
+                $('.numberButton').click(function(){
+                    var aktualniCislo=$(this).text();
+                    var numberInputVal=numberInput.val();
+                    let lastInput = numberInputVal.substr(numberInputVal.length-1, 1);
+
+                    if (probihajiciVypocet){
+                        numberInputVal = 0;
+                        probihajiciVypocet = false;
+                    }
+
+                    if (numberInputVal === "0" && aktualniCislo >= 0){
+                        numberInputVal=aktualniCislo;
+                    } else if(lastInput >= 0 || isNaN(lastInput)){
+                        numberInputVal+=aktualniCislo;
+                    }
+
+                    numberInput.val(numberInputVal);
+                });
+
+                $('#buttonFaktorial').click(function(){
+                    faktorial();
+                    //TODO spočítání faktoriálu u čísla, které je aktuálně zobrazené na displeji
+                });
+                //TODO doplnění reakcí na tlačítka, která představují jednotlivé matematické operace (pozor na prioritu násobení před sčítáním!)
+                $('#buttonPlus').click(function () {
+                    var aktualniZnak=$(this).text();
+                    var numberInputVal=numberInput.val();
+                    let lastInput = numberInputVal.substr(numberInputVal.length-1, 1);
+
+                    if (numberInputVal !== 0 && !isNaN(lastInput)) {
+                        numberInputVal+=aktualniZnak;
+                    }
+
+                    numberInput.val(numberInputVal);
+                })
+
+                $('#buttonMinus').click(function () {
+                    var aktualniZnak=$(this).text();
+                    var numberInputVal=numberInput.val();
+                    let lastInput = numberInputVal.substr(numberInputVal.length-1, 1);
+
+                    if (numberInputVal !== 0 && !isNaN(lastInput)){
+                        numberInputVal+=aktualniZnak;
+                    }
+
+                    numberInput.val(numberInputVal);
+                })
+
+                $('#buttonKrat').click(function () {
+                    var aktualniZnak=$(this).text();
+                    var numberInputVal=numberInput.val();
+                    let lastInput = numberInputVal.substr(numberInputVal.length-1, 1);
+
+                    if (numberInputVal !== 0 && !isNaN(lastInput)){
+                        numberInputVal+=aktualniZnak;
+                    }
+
+                    numberInput.val(numberInputVal);
+                })
+
+                $('#buttonDeleno').click(function () {
+                    var aktualniZnak=$(this).text();
+                    var numberInputVal=numberInput.val();
+                    let lastInput = numberInputVal.substr(numberInputVal.length-1, 1);
+
+                    if (numberInputVal !== 0 && !isNaN(lastInput)){
+                        numberInputVal+=aktualniZnak;
+                    }
+
+                    numberInput.val(numberInputVal);
+                })
+
+                $('#buttonRovnase').click(function(){
+                    spocitat();
+                });
+
+                $('#buttonCe').click(function(){
+                    numberInput.val(0);
+                    probihajiciVypocet=false;
+                });
+
+                numberInput.keypress(function(event){
+                    let numberInputVal = numberInput.val();
+
+                    if ((event.which !== 8 && event.which !== 13 && isNaN(String.fromCharCode(event.which))
+                        && event.which !== 42 && event.which !== 43 && event.which !== 45 &&
+                        event.which !== 47) && event.which !== 46 && event.which !== 17) {
+                        event.preventDefault();
+                    }
+
+                    if (probihajiciVypocet) {
+                        numberInput.val("");
+                        probihajiciVypocet=false;
+                    }
+
+                    if ((event.which === 42 || event.which === 43 || event.which === 45 || event.which === 47) &&
+                        (numberInputVal.substr(event.target.selectionStart-1, 1) === '+' ||
+                        numberInputVal.substr(event.target.selectionStart-1, 1) === '-' ||
+                        numberInputVal.substr(event.target.selectionStart-1, 1) === '*' ||
+                        numberInputVal.substr(event.target.selectionStart-1, 1) === '/')) {
+                        event.preventDefault();
+                    }
+
+                    if (numberInputVal === "0" && event.which !== 48) {
+                        numberInput.val("");
+                    }
+
+                    if (numberInputVal === "" && (event.which === 42 || event.which === 47)) {
+                        event.preventDefault();
+                    }
+
+                    if (event.which === 48 &&
+                        (numberInputVal.substr(event.target.selectionStart-1, 1) === '+' ||
+                        numberInputVal.substr(event.target.selectionStart-1, 1) === '-' ||
+                        numberInputVal.substr(event.target.selectionStart-1, 1) === '*' ||
+                        numberInputVal.substr(event.target.selectionStart-1, 1) === '/' ||
+                        numberInputVal.substr(0, numberInputVal.length) === "0")) {
+                        event.preventDefault();
+                    }
+
+                    if (event.which === 13) {
+                        spocitat();
+                    }
+
+                    if (event.which === 33) {
+                        faktorial();
+                    }
+                });
+
+                numberInput.keydown(function (event) {
+                    if (event.which === 46) {
+                        numberInput.val(0)
+                        probihajiciVypocet=false;
+                    }
+
+                    if (event.ctrlKey && event.which === 86) {
+                        event.preventDefault();
+                    }
+                })
+            });
+        </script>
+    </head>
+    <body>
+    <input id="cislo" value="0"/>
+    <div id="buttons">
+        <button type="button" class="numberButton" id="button7">7</button>
+        <button type="button" class="numberButton" id="button8">8</button>
+        <button type="button" class="numberButton" id="button9">9</button>
+        <button type="button" id="buttonPlus">+</button>
+
+        <button type="button" class="numberButton" id="button4">4</button>
+        <button type="button" class="numberButton" id="button5">5</button>
+        <button type="button" class="numberButton" id="button6">6</button>
+        <button type="button" id="buttonMinus">-</button>
+
+        <button type="button" class="numberButton" id="button1">1</button>
+        <button type="button" class="numberButton" id="button2">2</button>
+        <button type="button" class="numberButton" id="button3">3</button>
+        <button type="button" id="buttonKrat">*</button>
+
+        <button type="button" class="numberButton" id="button0">0</button>
+        <button type="button" id="buttonFaktorial" title="faktoriál">!</button>
+        <button type="button" id="buttonDeleno">/</button>
+
+        <button type="button" id="buttonCe">CE</button>
+        <button type="button" id="buttonRovnase">=</button>
+    </div>
+    </body>
+</html>
